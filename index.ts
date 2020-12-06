@@ -15,23 +15,28 @@ function apiKeys() {
 
   assert(!!parsed);
   const {
-    CONSUMER_KEY,
-    CONSUMER_SECRET,
-    ACCESS_TOKEN_KEY,
+    BEARER_TOKEN,
+    API_KEY,
+    API_SECRET_KEY,
+    ACCESS_TOKEN,
     ACCESS_TOKEN_SECRET,
   } = parsed;
 
   assert(
-    typeof CONSUMER_KEY === "string",
-    `"CONSUMER_KEY" is '${typeof CONSUMER_KEY}' instead of 'string'`
+    typeof BEARER_TOKEN === "string",
+    `"BEARER_TOKEN" is '${typeof BEARER_TOKEN}' instead of 'string'`
   );
   assert(
-    typeof CONSUMER_SECRET === "string",
-    `"CONSUMER_SECRET" is '${typeof CONSUMER_SECRET}' instead of 'string'`
+    typeof API_KEY === "string",
+    `"API_KEY" is '${typeof API_KEY}' instead of 'string'`
   );
   assert(
-    typeof ACCESS_TOKEN_KEY === "string",
-    `"ACCESS_TOKEN_KEY" is '${typeof ACCESS_TOKEN_KEY}' instead of 'string'`
+    typeof API_SECRET_KEY === "string",
+    `"API_SECRET_KEY" is '${typeof API_SECRET_KEY}' instead of 'string'`
+  );
+  assert(
+    typeof ACCESS_TOKEN === "string",
+    `"ACCESS_TOKEN" is '${typeof ACCESS_TOKEN}' instead of 'string'`
   );
   assert(
     typeof ACCESS_TOKEN_SECRET === "string",
@@ -39,32 +44,46 @@ function apiKeys() {
   );
 
   return {
-    CONSUMER_KEY,
-    CONSUMER_SECRET,
-    ACCESS_TOKEN_KEY,
+    BEARER_TOKEN,
+    API_KEY,
+    API_SECRET_KEY,
+    ACCESS_TOKEN,
     ACCESS_TOKEN_SECRET,
   };
 }
 
 function loadTweetData(): string[] {
-  // throw "not yet implemented";
-  return [];
+  throw "not yet implemented";
 }
+
+const log = (val: unknown) => console.log(val);
+const logErr = (err: unknown) => console.error(err);
+
+type Map = <A, B>(fn: (a: A) => B) => (as: A[]) => B[];
+const map: Map = (cb) => (as) => as.map(cb);
+
+type ForEach = <A>(op: (a: A) => void) => (as: A[]) => void;
+const forEach: ForEach = (op) => (as) => as.forEach(op);
 
 async function main() {
   const keys = apiKeys();
 
   const client = new Twitter({
-    consumer_key: keys.CONSUMER_KEY,
-    consumer_secret: keys.CONSUMER_SECRET,
-    access_token_key: keys.ACCESS_TOKEN_KEY,
+    // bearer_token: keys.BEARER_TOKEN,
+    consumer_key: keys.API_KEY,
+    consumer_secret: keys.API_SECRET_KEY,
+    access_token_key: keys.ACCESS_TOKEN,
     access_token_secret: keys.ACCESS_TOKEN_SECRET,
   });
 
-  let intoDeletion = (id: string) => client.post(`/statuses/destroy/${id}`);
+  let intoDeletion = (id: string) =>
+    client.post(`/statuses/destroy/${id}.json`, {});
 
   const tweetsToDelete = loadTweetData();
-  await Promise.all(tweetsToDelete.map(intoDeletion));
+  await Promise.all(tweetsToDelete.map(intoDeletion))
+    .then(map(({ id }) => id))
+    .then(forEach(log))
+    .catch(logErr);
 }
 
 main();
