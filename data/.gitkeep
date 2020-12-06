@@ -1,0 +1,2 @@
+This is here so you have a `data` directory even though that directory is
+`.gitignore`d.

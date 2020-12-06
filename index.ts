@@ -1,9 +1,11 @@
 import Twitter from "twitter";
 import { config } from "dotenv";
+import { log, logErr, map, forEach, not, matchedIn } from "./fn";
 
 function assert(pred: unknown, msg?: string): asserts pred {
   if (!pred) {
-    throw msg ?? "NOOOOOPE!";
+    logErr(msg ?? "NOOOOOPE!");
+    process.exit(1);
   }
 }
 
@@ -14,18 +16,8 @@ function apiKeys() {
   }
 
   assert(!!parsed);
-  const {
-    BEARER_TOKEN,
-    API_KEY,
-    API_SECRET_KEY,
-    ACCESS_TOKEN,
-    ACCESS_TOKEN_SECRET,
-  } = parsed;
+  const { API_KEY, API_SECRET_KEY, ACCESS_TOKEN, ACCESS_TOKEN_SECRET } = parsed;
 
-  assert(
-    typeof BEARER_TOKEN === "string",
-    `"BEARER_TOKEN" is '${typeof BEARER_TOKEN}' instead of 'string'`
-  );
   assert(
     typeof API_KEY === "string",
     `"API_KEY" is '${typeof API_KEY}' instead of 'string'`
@@ -43,27 +35,24 @@ function apiKeys() {
     `"ACCESS_TOKEN_SECRET" is '${typeof ACCESS_TOKEN_SECRET}' instead of 'string'`
   );
 
-  return {
-    BEARER_TOKEN,
-    API_KEY,
-    API_SECRET_KEY,
-    ACCESS_TOKEN,
-    ACCESS_TOKEN_SECRET,
-  };
+  return { API_KEY, API_SECRET_KEY, ACCESS_TOKEN, ACCESS_TOKEN_SECRET };
 }
 
 function loadTweetData(): string[] {
   throw "not yet implemented";
 }
 
-const log = (val: unknown) => console.log(val);
-const logErr = (err: unknown) => console.error(err);
+const CALLER_ARGS = ["ts-node", "npm", "run", "yarn", "index.ts"];
 
-type Map = <A, B>(fn: (a: A) => B) => (as: A[]) => B[];
-const map: Map = (cb) => (as) => as.map(cb);
+function beforeDate() {
+  const args = process.argv.filter(not(matchedIn(CALLER_ARGS)));
+  assert(
+    args.length === 0 || args.length === 2,
+    "you can only pass --before <YYYY-MM-DD>"
+  );
 
-type ForEach = <A>(op: (a: A) => void) => (as: A[]) => void;
-const forEach: ForEach = (op) => (as) => as.forEach(op);
+  return args.length === 2 ? Date.parse(args[1]) : null;
+}
 
 async function main() {
   const keys = apiKeys();
