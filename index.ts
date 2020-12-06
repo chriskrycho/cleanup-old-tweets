@@ -5,7 +5,6 @@ import { readFileSync } from "fs";
 import type { Tweet } from "./tweet";
 import { Result } from "true-myth";
 import { writeFile } from "fs/promises";
-import Maybe from "true-myth/maybe";
 
 function assert(pred: unknown, msg?: string): asserts pred {
   if (!pred) {
