@@ -1,7 +1,7 @@
 # credentials, output, etc.
 .env
 data
-error.json
+errors.json
 
 # Created by https://www.toptal.com/developers/gitignore/api/node,code
 # Edit at https://www.toptal.com/developers/gitignore?templates=node,code
