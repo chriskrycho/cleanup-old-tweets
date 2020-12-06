@@ -117,8 +117,10 @@ async function main() {
   let intoDeletion = ({ id }: Tweet) =>
     client
       .post(`/statuses/destroy/${id}.json`, {})
-      .then(({ id }) => Result.ok<string, unknown>(id))
-      .catch((err: unknown) => Result.err<string, unknown>(err));
+      .then(({ id }) => Result.ok<string, [string, unknown]>(id))
+      .catch((err: unknown) =>
+        Result.err<string, [string, unknown]>([id, err])
+      );
 
   const deletions = loadTweetData(filterDates()).map(intoDeletion);
 
@@ -127,10 +129,11 @@ async function main() {
       results.reduce(
         ([count, errs], result) =>
           result.match({
-            Ok: (_) => [count + 1, errs] as [number, unknown[]],
-            Err: (err) => [count, errs.concat(err)] as [number, unknown[]],
+            Ok: (_) => [count + 1, errs] as [number, [string, unknown][]],
+            Err: (err) =>
+              [count, errs.concat(err)] as [number, [string, unknown][]],
           }),
-        [0, []] as [number, unknown[]]
+        [0, []] as [number, [string, unknown][]]
       )
     )
     .then(([count, errs]) => {
