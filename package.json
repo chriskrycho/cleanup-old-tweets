@@ -1,0 +1,37 @@
+{
+  "volta": {
+    "node": "15.3.0",
+    "npm": "7.1.0"
+  },
+  "name": "cleanup-old-tweets",
+  "description": "Use the Twitter API to delete old tweets",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "do-it": "ts-node --transpile-only index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chriskrycho/cleanup-old-tweets.git"
+  },
+  "keywords": [
+    "Twitter",
+    "Node"
+  ],
+  "author": "Chris Krycho",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/chriskrycho/cleanup-old-tweets/issues"
+  },
+  "homepage": "https://github.com/chriskrycho/cleanup-old-tweets#readme",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "ts-node": "^9.1.0",
+    "twitter": "^1.7.1",
+    "typescript": "^4.1.2"
+  },
+  "devDependencies": {
+    "@types/twitter": "^1.7.0"
+  }
+}
