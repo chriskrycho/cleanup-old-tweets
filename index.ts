@@ -1,10 +1,14 @@
-import Twitter from "twitter";
-import { config } from "dotenv";
-import { logErr, not, matchedIn } from "./fn";
-import { readFileSync } from "fs";
-import type { Tweet } from "./tweet";
-import { Result } from "true-myth";
 import { writeFile } from "fs/promises";
+
+import { config } from "dotenv";
+import { readFileSync } from "fs";
+import { Result, Unit } from "true-myth";
+import Twitter from "twitter";
+
+import { logErr, not, matchedIn, includedIn } from "./fn";
+import type { Tweet } from "./tweet";
+
+const EXCLUDED_IDS: string[] = [];
 
 function assert(pred: unknown, msg?: string): asserts pred {
   if (!pred) {
@@ -102,11 +106,14 @@ function filterDates(): FilterDates {
   }
 }
 
+type FinalError =
+  | { tag: "count"; errCount: number }
+  | { tag: "unknown"; unknownErr: unknown };
+
 async function main() {
   const keys = apiKeys();
 
   const client = new Twitter({
-    // bearer_token: keys.BEARER_TOKEN,
     consumer_key: keys.API_KEY,
     consumer_secret: keys.API_SECRET_KEY,
     access_token_key: keys.ACCESS_TOKEN,
@@ -121,9 +128,11 @@ async function main() {
         Result.err<string, [string, unknown]>([id, err])
       );
 
-  const deletions = loadTweetData(filterDates()).map(intoDeletion);
+  const deletions = loadTweetData(filterDates())
+    .filter(({ id }) => not(includedIn(EXCLUDED_IDS))(id))
+    .map(intoDeletion);
 
-  Promise.all(deletions)
+  const result = await Promise.all(deletions)
     .then((results) =>
       results.reduce(
         ([count, errs], result) =>
@@ -141,12 +150,38 @@ async function main() {
       if (errs.length) {
         let errsFile = "errors.json";
         console.info(`also had ${errs.length} errs, printing to ${errsFile}`);
-        return writeFile("errors.json", JSON.stringify(errs, null, 2));
+        return writeFile("errors.json", JSON.stringify(errs, null, 2))
+          .then(() =>
+            Result.err<Unit, FinalError>({
+              tag: "count",
+              errCount: errs.length,
+            })
+          )
+          .catch((unknownErr) => Result.err<Unit, FinalError>(unknownErr));
       } else {
-        return;
+        return Result.ok<Unit, FinalError>(Unit);
       }
     })
-    .catch(logErr);
+    .catch((unknownErr: unknown) => {
+      logErr(unknownErr);
+      return Result.err<Unit, FinalError>({ tag: "unknown", unknownErr });
+    });
+
+  result.match({
+    Ok() {
+      return process.exit(0);
+    },
+    Err(err) {
+      switch (err.tag) {
+        case "count":
+          console.error(`completed but with ${err.errCount} errors`);
+          return process.exit(1);
+        case "unknown":
+          console.error("completed with unknown error");
+          return process.exit(2);
+      }
+    },
+  });
 }
 
 main();
